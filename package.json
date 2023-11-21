@@ -12,6 +12,11 @@
     "module": "es/index.js",
     "types": "lib/types/index.d.ts",
     "license": "Apache-2.0",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Particle-Network/aa-sdk.git",
+        "directory": "packages/aa-sdk"
+    },
     "publishConfig": {
         "access": "public"
     },
