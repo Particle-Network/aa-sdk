@@ -34,10 +34,9 @@ export class SmartAccount {
                             name,
                             version: contract.version,
                         };
+                        break;
                     }
                 }
-
-                break;
             }
         }
         this.connection = axios.create({
@@ -82,7 +81,7 @@ export class SmartAccount {
         }
 
         const contractConfig = accountContract.find((item) => item.version === this.smartAccountContract.version)!;
-        if (contractConfig.chainIds.some((id) => id != Number(chainId))) {
+        if (contractConfig.chainIds.every((id) => id !== Number(chainId))) {
             throw new Error(`Current chain is not supported, chainId: ${chainId}, please configure it first`);
         }
         return {

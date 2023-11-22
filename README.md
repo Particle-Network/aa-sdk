@@ -34,7 +34,7 @@ const smartAccount = new SmartAccount(provider, {
     clientKey: 'particle client key',
     appId: 'particle app id',
     aaOptions: {
-        accountContracts: {
+        accountContracts: {  // 'BICONOMY', 'CYBERCONNECT', 'SIMPLE' is supported now.
             BICONOMY: [
                 {
                     version: '1.0.0',
