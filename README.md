@@ -34,43 +34,61 @@ const smartAccount = new SmartAccount(provider, {
     clientKey: 'particle client key',
     appId: 'particle app id',
     aaOptions: {
-        biconomy: [{
-            chainId: xx,
-            version: '1.0.0',
-        }],
-        cyberConnect: [{
-            chainId: xx,
-            version: '1.0.0',
-        }],
-        simple: [{
-            chainId: xx,
-            version: '1.0.0',
-        }],
+        accountContracts: {
+            BICONOMY: [
+                {
+                    version: '1.0.0',
+                    chainIds: [x, xx],
+                },
+                {
+                    version: '2.0.0',
+                    chainIds: [x, xx],
+                }
+            ],
+            CYBERCONNECT: [
+                {
+                    version: '1.0.0',
+                    chainIds: [x, xx],
+                }
+            ],
+            SIMPLE: [
+                {
+                    version: '1.0.0',
+                    chainIds: [x, xx],
+                }
+            ],
+        },
         paymasterApiKeys: [{
             chainId: 1,
-            apiKey: 'biconomy paymaster api key',
+            apiKey: 'paymaster api key',
         }]
     },
 });
+
+// set current smart account contract
+smartAccount.setSmartAccountContract({ name: 'BICONOMY', version: '2.0.0' });
+
 ```
 
 ## Get Smart Account Address
 
 Once you have connected your EOA signer and created an instance of Smart Account, the address is the public property and remains the same across all EVM chains.
 
-<pre class="language-typescript"><code class="lang-typescript">// AA address
-<strong>const address = await smartAccount.getAddress();
-</strong>// EOA address
+```typescript
+// AA address
+const address = await smartAccount.getAddress();
+// EOA address
 const address = await smartAccount.getOwner();
 // load account more info.
 const accountInfo = await smartAccount.getAccount();
-</code></pre>
+```
 
 ## Get Fee Quotes
 
 Before send transactions, you can get fee quotes and display on UI Modal, users can choose which token to use to pay gas fees.
 
-<pre class="language-typescript"><code class="lang-typescript">const tx = {
+```typescript
+const tx = {
     to: '0x...',
     value: '0x...'
 }
@@ -90,17 +108,18 @@ const feeQuotesResult = await smartAccount.getFeeQuotes(tx);
 
 // gasless transaction userOp, maybe null
 const gaslessUserOp = feeQuotesResult.verifyingPaymasterGasless?.userOp;
-<strong>const gaslessUserOpHash = feeQuotesResult.verifyingPaymasterGasless?.userOpHash;
-</strong>
-<strong>// pay with Native tokens: transaction userOp
-</strong>const paidNativeUserOp = feeQuotesResult.verifyingPaymasterNative?.userOp;
+const gaslessUserOpHash = feeQuotesResult.verifyingPaymasterGasless?.userOpHash;
+
+// pay with Native tokens: transaction userOp
+const paidNativeUserOp = feeQuotesResult.verifyingPaymasterNative?.userOp;
 const paidNativeUserOpHash = feeQuotesResult.verifyingPaymasterNative?.userOpHash;
 
 // pay with ERC-20 tokens: fee quotes
-<strong>const tokenPaymasterAddress = feeQuotesResult.tokenPaymaster.tokenPaymasterAddress;
-</strong>const tokenFeeQuotes = feeQuotesResult.tokenPaymaster.feeQuotes;
+const tokenPaymasterAddress = feeQuotesResult.tokenPaymaster.tokenPaymasterAddress;
+const tokenFeeQuotes = feeQuotesResult.tokenPaymaster.feeQuotes;
 
 </code></pre>
+```
 
 ## Build User Operation
 
@@ -141,25 +160,26 @@ if (!isDeploy) {
 
 If your app has implemented sending transactions, or use web3.js, you can wrap the EIP-1193 provider to quickly implement AA wallet.
 
-<pre class="language-typescript"><code class="lang-typescript">import { AAWrapProvider, SendTransactionMode, SendTransactionEvent } from '@particle-network/aa';
+```typescript
+import { AAWrapProvider, SendTransactionMode, SendTransactionEvent } from '@particle-network/aa';
 import Web3 from "web3";
 
-<strong>// sendTxMode: UserPaidNative(default), Gasless, UserSelect
-</strong><strong>const wrapProvider = new AAWrapProvider(smartAccount, SendTransactionMode.UserPaidNative);
-</strong><strong>// replace any EIP-1193 provider to wrapProvider
-</strong><strong>const web3 = new Web3(wrapProvider);
-</strong>//send user paid transaction
-<strong>await web3.eth.sendTransaction(tx);
-</strong>
+// sendTxMode: UserPaidNative(default), Gasless, UserSelect
+const wrapProvider = new AAWrapProvider(smartAccount, SendTransactionMode.UserPaidNative);
+// replace any EIP-1193 provider to wrapProvider
+const web3 = new Web3(wrapProvider);
+//send user paid transaction
+await web3.eth.sendTransaction(tx);
 
-<strong>// send gassless transaction
-</strong>const wrapProvider = new AAWrapProvider(smartAccount, SendTransactionMode.Gasless);
+
+// send gassless transaction
+const wrapProvider = new AAWrapProvider(smartAccount, SendTransactionMode.Gasless);
 const web3 = new Web3(wrapProvider);
 await web3.eth.sendTransaction(tx);
 
 
-<strong>// use select pay gas token or gasless
-</strong>const wrapProvider = new AAWrapProvider(smartAccount, SendTransactionMode.UserSelect);
+// use select pay gas token or gasless
+const wrapProvider = new AAWrapProvider(smartAccount, SendTransactionMode.UserSelect);
 const web3 = new Web3(wrapProvider);
 wrapProvider.once(SendTransactionEvent.Request, (feeQuotesResult) => {
     // let the user select the pay gas ERC-20 token
@@ -181,4 +201,4 @@ wrapProvider.once(SendTransactionEvent.Request, (feeQuotesResult) => {
 });
 await web3.eth.sendTransaction(tx);
 
-</code></pre>
+```
