@@ -2,6 +2,7 @@ import axios from 'axios';
 import type {
     Account,
     AccountConfig,
+    AccountContract,
     FeeQuotesResponse,
     IEthereumProvider,
     RequestArguments,
@@ -12,25 +13,33 @@ import type {
     UserOpBundle,
     UserOpParams,
 } from './types';
-import { SmartAccountType } from './types';
 import { payloadId, rpcUrl } from './utils';
 
 export class SmartAccount {
     private connection;
 
-    private smartAccountType = SmartAccountType.BICONOMY;
+    private smartAccountContract: AccountContract = {
+        name: 'BICONOMY',
+        version: '1.0.0',
+    };
 
     constructor(public provider: IEthereumProvider, private config: SmartAccountConfig) {
-        if (this.config.aaOptions.biconomy && this.config.aaOptions.biconomy.length > 0) {
-            this.smartAccountType = SmartAccountType.BICONOMY;
-        } else if (this.config.aaOptions.cyberConnect && this.config.aaOptions.cyberConnect.length > 0) {
-            this.smartAccountType = SmartAccountType.CYBERCONNECT;
-        } else if (this.config.aaOptions.simple && this.config.aaOptions.simple.length > 0) {
-            this.smartAccountType = SmartAccountType.SIMPLE;
-        } else {
-            throw new Error('aaOptions is not configured correctly');
-        }
+        const aaOrder = ['BICONOMY', 'CYBERCONNECT', 'SIMPLE'];
+        for (const name of aaOrder) {
+            const accountContract = this.config.aaOptions.accountContracts[name];
+            if (accountContract.length > 0) {
+                for (const contract of accountContract) {
+                    if (contract.chainIds.length > 0) {
+                        this.smartAccountContract = {
+                            name,
+                            version: contract.version,
+                        };
+                    }
+                }
 
+                break;
+            }
+        }
         this.connection = axios.create({
             baseURL: `${rpcUrl()}/evm-chain`,
             timeout: 60_000,
@@ -46,8 +55,16 @@ export class SmartAccount {
         });
     }
 
-    setSmartAccountType(type: SmartAccountType) {
-        this.smartAccountType = type;
+    setSmartAccountContract(contract: AccountContract) {
+        const accountContract = this.config.aaOptions.accountContracts[contract.name];
+        if (
+            !accountContract ||
+            accountContract.length === 0 ||
+            accountContract.every((item) => item.version !== contract.version)
+        ) {
+            throw new Error('Please configure the smart account contract first');
+        }
+        this.smartAccountContract = contract;
     }
 
     private getChainId = async (): Promise<string> => {
@@ -58,40 +75,22 @@ export class SmartAccount {
         const chainId = await this.getChainId();
         const apiKey = await this.getPaymasterApiKey();
         const ownerAddress = (await this.provider.request({ method: 'eth_accounts' }))[0];
-        if (this.smartAccountType === SmartAccountType.BICONOMY) {
-            const networkConfig = this.config.aaOptions.biconomy?.find((item) => item.chainId === Number(chainId));
-            if (networkConfig) {
-                return {
-                    name: SmartAccountType.BICONOMY,
-                    version: networkConfig.version,
-                    biconomyApiKey: apiKey,
-                    ownerAddress,
-                };
-            }
-        } else if (this.smartAccountType === SmartAccountType.CYBERCONNECT) {
-            const networkConfig = this.config.aaOptions.cyberConnect?.find((item) => item.chainId === Number(chainId));
-            if (networkConfig) {
-                return {
-                    name: SmartAccountType.CYBERCONNECT,
-                    version: networkConfig.version,
-                    biconomyApiKey: apiKey,
-                    ownerAddress,
-                };
-            }
-        } else if (this.smartAccountType === SmartAccountType.SIMPLE) {
-            const networkConfig = this.config.aaOptions.simple?.find((item) => item.chainId === Number(chainId));
-            if (networkConfig) {
-                return {
-                    name: SmartAccountType.SIMPLE,
-                    version: networkConfig.version,
-                    biconomyApiKey: apiKey,
-                    ownerAddress,
-                };
-            }
-        } else {
-            throw new Error(`smart account type error, unsupport type: ${this.smartAccountType}`);
+
+        const accountContract = this.config.aaOptions.accountContracts[this.smartAccountContract.name];
+        if (!accountContract || accountContract.every((item) => item.version !== this.smartAccountContract.version)) {
+            throw new Error('Please configure the smart account contract first');
         }
-        throw new Error(`Current chain is not supported, chainId: ${chainId}, please configure it first`);
+
+        const contractConfig = accountContract.find((item) => item.version === this.smartAccountContract.version)!;
+        if (contractConfig.chainIds.some((id) => id != Number(chainId))) {
+            throw new Error(`Current chain is not supported, chainId: ${chainId}, please configure it first`);
+        }
+        return {
+            name: this.smartAccountContract.name,
+            version: this.smartAccountContract.version,
+            biconomyApiKey: apiKey,
+            ownerAddress,
+        };
     }
 
     async getPaymasterApiKey(): Promise<string | undefined> {

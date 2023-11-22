@@ -43,14 +43,19 @@ export interface Account {
 }
 
 export type AccountConfig = {
-    name: SmartAccountType;
+    name: string;
     version: string;
     biconomyApiKey?: string;
     ownerAddress: string;
 };
 
-export interface NetworkConfig {
-    chainId: number;
+export interface AccountContractConfig {
+    chainIds: number[];
+    version: string;
+}
+
+export interface AccountContract {
+    name: string;
     version: string;
 }
 
@@ -67,9 +72,9 @@ export interface SmartAccountConfig {
 }
 
 export interface AAOptions {
-    biconomy?: NetworkConfig[];
-    cyberConnect?: NetworkConfig[];
-    simple?: NetworkConfig[];
+    accountContracts: {
+        [key: string]: AccountContractConfig[];
+    };
     paymasterApiKeys?: ApiKeyConfig[];
 }
 
@@ -133,9 +138,3 @@ export interface UserOpParams {
 export type SendTransactionParams = UserOpBundle | UserOpParams;
 
 export type ResolveTransactionParams = UserOpBundle | Omit<UserOpParams, 'tx'>;
-
-export enum SmartAccountType {
-    SIMPLE = 'SIMPLE',
-    CYBERCONNECT = 'CYBERCONNECT',
-    BICONOMY = 'BICONOMY',
-}
