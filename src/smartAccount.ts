@@ -27,7 +27,7 @@ export class SmartAccount {
         const aaOrder = ['BICONOMY', 'CYBERCONNECT', 'SIMPLE'];
         for (const name of aaOrder) {
             const accountContract = this.config.aaOptions.accountContracts[name];
-            if (accountContract.length > 0) {
+            if (accountContract && accountContract.length > 0) {
                 for (const contract of accountContract) {
                     if (contract.chainIds.length > 0) {
                         this.smartAccountContract = {
