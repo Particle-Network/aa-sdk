@@ -152,3 +152,8 @@ export interface CreateSessionKeyOptions extends Omit<SessionKey, 'sessionKeyDat
     sessionKeyData?: string;
     sessionKeyDataInAbi?: [[...string[]], [...unknown[]]];
 }
+
+export interface SessionDataParams {
+    sessions: SessionKey[];
+    targetSession: SessionKey;
+}

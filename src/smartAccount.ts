@@ -8,6 +8,7 @@ import type {
     IEthereumProvider,
     RequestArguments,
     SendTransactionParams,
+    SessionDataParams,
     SessionKey,
     SmartAccountConfig,
     Transaction,
@@ -132,11 +133,11 @@ export class SmartAccount {
         return this.sendSignedUserOperation(signedUserOp);
     }
 
-    async sendSignedUserOperation(userOp: UserOp): Promise<string> {
+    async sendSignedUserOperation(userOp: UserOp, sessionDataParams?: SessionDataParams): Promise<string> {
         const accountConfig = await this.getAccountConfig();
         return this.sendRpc<string>({
             method: 'particle_aa_sendUserOp',
-            params: [accountConfig, userOp],
+            params: [accountConfig, userOp, sessionDataParams],
         });
     }
 
