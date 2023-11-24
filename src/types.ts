@@ -127,6 +127,8 @@ export interface FeeQuotesResponse {
     verifyingPaymasterGasless?: VerifyingPaymaster;
     verifyingPaymasterNative: VerifyingPaymaster;
     tokenPaymaster?: TokenPaymaster;
+    sessions?: SessionKey[];
+    transactions?: unknown[];
 }
 
 export interface UserOpParams {
@@ -138,3 +140,15 @@ export interface UserOpParams {
 export type SendTransactionParams = UserOpBundle | UserOpParams;
 
 export type ResolveTransactionParams = UserOpBundle | Omit<UserOpParams, 'tx'>;
+
+export interface SessionKey {
+    validUntil: number;
+    validAfter: number;
+    sessionValidationModule: string;
+    sessionKeyData: string;
+}
+
+export interface CreateSessionKeyOptions extends Omit<SessionKey, 'sessionKeyData'> {
+    sessionKeyData?: string;
+    sessionKeyDataInAbi?: [[...string[]], [...unknown[]]];
+}
