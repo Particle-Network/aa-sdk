@@ -21,27 +21,24 @@ import { payloadId, rpcUrl } from './utils';
 export class SmartAccount {
     private connection;
 
-    private smartAccountContract: AccountContract = {
-        name: 'BICONOMY',
-        version: '1.0.0',
-    };
+    private smartAccountContract: AccountContract;
 
     constructor(public provider: IEthereumProvider, private config: SmartAccountConfig) {
-        const aaOrder = ['BICONOMY', 'CYBERCONNECT', 'SIMPLE'];
-        for (const name of aaOrder) {
-            const accountContract = this.config.aaOptions.accountContracts[name];
-            if (accountContract && accountContract.length > 0) {
-                for (const contract of accountContract) {
-                    if (contract.chainIds.length > 0) {
-                        this.smartAccountContract = {
-                            name,
-                            version: contract.version,
-                        };
-                        break;
-                    }
-                }
-            }
+        if(!this.config.projectId || !this.config.clientKey || !this.config.appId) {
+            throw new Error('invalid project config');
         }
+        if(!this.config.aaOptions.accountContracts) {
+            throw new Error('invalid AA contract config');
+        }
+        const name = Object.keys(this.config.aaOptions.accountContracts)[0];
+        const version = this.config.aaOptions.accountContracts[name]?.[0]?.version;
+        if (!name || !version) {
+            throw new Error('invalid AA name or version');
+        }
+        this.smartAccountContract = {
+            name,
+            version,
+        };
         this.connection = axios.create({
             baseURL: `${rpcUrl()}/evm-chain`,
             timeout: 60_000,
@@ -69,7 +66,7 @@ export class SmartAccount {
         this.smartAccountContract = contract;
     }
 
-    private getChainId = async (): Promise<string> => {
+    getChainId = async (): Promise<string> => {
         return await this.provider.request({ method: 'eth_chainId' });
     };
 
