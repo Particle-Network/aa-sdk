@@ -122,6 +122,9 @@ export class AAWrapProvider implements IEthereumProvider {
                     }
                 });
                 this.events.once(SendTransactionEvent.Reject, reject);
+                if (!feeQuotesResult.transactions) {
+                    feeQuotesResult.transactions = [txData];
+                }
                 this.events.emit(SendTransactionEvent.Request, feeQuotesResult);
             });
         }
