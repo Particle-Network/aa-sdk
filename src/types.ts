@@ -38,6 +38,7 @@ export interface Account {
     owner: string;
     index: number;
     implementationAddress: string;
+    implementationVersion: string;
     fallBackHandlerAddress: string;
     version: string;
 }
