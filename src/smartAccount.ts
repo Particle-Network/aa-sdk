@@ -231,9 +231,6 @@ export class SmartAccount {
     }
 
     async createSessions(options: CreateSessionKeyOptions[]): Promise<FeeQuotesResponse> {
-        if (this.smartAccountContract.name !== 'BICONOMY' && this.smartAccountContract.version !== '2.0.0') {
-            throw new Error('Only BICONOMY 2.0.0 is supported');
-        }
         const accountConfig = await this.getAccountConfig();
         return await this.sendRpc<FeeQuotesResponse>({
             method: 'particle_aa_createSessions',
@@ -242,10 +239,6 @@ export class SmartAccount {
     }
 
     async validateSession(targetSession: SessionKey, sessions: SessionKey[]): Promise<boolean> {
-        if (this.smartAccountContract.name !== 'BICONOMY' && this.smartAccountContract.version !== '2.0.0') {
-            throw new Error('Only BICONOMY 2.0.0 is supported');
-        }
-
         const accountConfig = await this.getAccountConfig();
         return await this.sendRpc<boolean>({
             method: 'particle_aa_validateSession',
