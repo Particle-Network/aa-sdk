@@ -71,7 +71,6 @@ export class SmartAccount {
     };
 
     private async getAccountConfig(): Promise<AccountConfig> {
-        const chainId = await this.getChainId();
         const ownerAddress = (await this.provider.request({ method: 'eth_accounts' }))[0];
 
         const accountContract = this.config.aaOptions.accountContracts[this.smartAccountContract.name];
@@ -79,10 +78,11 @@ export class SmartAccount {
             throw new Error('Please configure the smart account contract first');
         }
 
-        const contractConfig = accountContract.find((item) => item.version === this.smartAccountContract.version)!;
-        if (contractConfig.chainIds.every((id) => id !== Number(chainId))) {
-            throw new Error(`Current chain is not supported, chainId: ${chainId}, please configure it first`);
-        }
+        // const contractConfig = accountContract.find((item) => item.version === this.smartAccountContract.version)!;
+        // const chainId = await this.getChainId();
+        // if (contractConfig.chainIds.every((id) => id !== Number(chainId))) {
+        //     throw new Error(`Current chain is not supported, chainId: ${chainId}, please configure it first`);
+        // }
         return {
             name: this.smartAccountContract.name,
             version: this.smartAccountContract.version,
