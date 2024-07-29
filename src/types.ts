@@ -76,7 +76,6 @@ export interface AAOptions {
     accountContracts: {
         [key: string]: AccountContractConfig[];
     };
-    paymasterApiKeys?: ApiKeyConfig[];
 }
 
 export interface TokenInfo {

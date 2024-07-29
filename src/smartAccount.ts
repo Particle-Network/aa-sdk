@@ -24,10 +24,10 @@ export class SmartAccount {
     private smartAccountContract: AccountContract;
 
     constructor(public provider: IEthereumProvider, private config: SmartAccountConfig) {
-        if(!this.config.projectId || !this.config.clientKey || !this.config.appId) {
+        if (!this.config.projectId || !this.config.clientKey || !this.config.appId) {
             throw new Error('invalid project config');
         }
-        if(!this.config.aaOptions.accountContracts) {
+        if (!this.config.aaOptions.accountContracts) {
             throw new Error('invalid AA contract config');
         }
         const name = Object.keys(this.config.aaOptions.accountContracts)[0];
@@ -72,7 +72,6 @@ export class SmartAccount {
 
     private async getAccountConfig(): Promise<AccountConfig> {
         const chainId = await this.getChainId();
-        const apiKey = await this.getPaymasterApiKey();
         const ownerAddress = (await this.provider.request({ method: 'eth_accounts' }))[0];
 
         const accountContract = this.config.aaOptions.accountContracts[this.smartAccountContract.name];
@@ -87,15 +86,8 @@ export class SmartAccount {
         return {
             name: this.smartAccountContract.name,
             version: this.smartAccountContract.version,
-            biconomyApiKey: apiKey,
             ownerAddress,
         };
-    }
-
-    async getPaymasterApiKey(): Promise<string | undefined> {
-        const chainId = await this.getChainId();
-        const apiKeyConfig = this.config.aaOptions.paymasterApiKeys?.find((item) => item.chainId === Number(chainId));
-        return apiKeyConfig?.apiKey;
     }
 
     async getFeeQuotes(tx: Transaction | Transaction[]): Promise<FeeQuotesResponse> {
