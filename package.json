@@ -1,6 +1,6 @@
 {
     "name": "@particle-network/aa",
-    "version": "1.5.1",
+    "version": "1.5.2",
     "private": false,
     "files": [
         "lib",
