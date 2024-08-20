@@ -6,10 +6,12 @@ import type {
     CreateSessionKeyOptions,
     FeeQuotesResponse,
     IEthereumProvider,
+    PasskeyProvider,
+    PasskeySignerParams,
     RequestArguments,
     SendTransactionParams,
-    SessionDataParams,
     SessionKey,
+    SessionKeySignerParams,
     SmartAccountConfig,
     Transaction,
     UserOp,
@@ -23,7 +25,7 @@ export class SmartAccount {
 
     private smartAccountContract: AccountContract;
 
-    constructor(public provider: IEthereumProvider, private config: SmartAccountConfig) {
+    constructor(public provider: IEthereumProvider & PasskeyProvider, private config: SmartAccountConfig) {
         if (!this.config.projectId || !this.config.clientKey || !this.config.appId) {
             throw new Error('invalid project config');
         }
@@ -39,6 +41,7 @@ export class SmartAccount {
             name,
             version,
         };
+
         this.connection = axios.create({
             baseURL: `${rpcUrl()}/evm-chain`,
             timeout: 60_000,
@@ -70,23 +73,36 @@ export class SmartAccount {
         return await this.provider.request({ method: 'eth_chainId' });
     };
 
+    getOwner = async (): Promise<string> => {
+        const eoas = await this.provider.request({ method: 'eth_accounts' });
+        return eoas[0];
+    };
+
+    personalSign = async (msg: string): Promise<string> => {
+        const eoa = await this.getOwner();
+        const signature = await this.provider.request({
+            method: 'personal_sign',
+            params: [msg, eoa],
+        });
+        return signature;
+    };
+
     private async getAccountConfig(): Promise<AccountConfig> {
-        const ownerAddress = (await this.provider.request({ method: 'eth_accounts' }))[0];
+        const ownerAddress = await this.getOwner();
 
         const accountContract = this.config.aaOptions.accountContracts[this.smartAccountContract.name];
         if (!accountContract || accountContract.every((item) => item.version !== this.smartAccountContract.version)) {
             throw new Error('Please configure the smart account contract first');
         }
 
-        // const contractConfig = accountContract.find((item) => item.version === this.smartAccountContract.version)!;
-        // const chainId = await this.getChainId();
-        // if (contractConfig.chainIds.every((id) => id !== Number(chainId))) {
-        //     throw new Error(`Current chain is not supported, chainId: ${chainId}, please configure it first`);
-        // }
+        const passkeyOption = this.provider.getPasskeyOption?.();
         return {
             name: this.smartAccountContract.name,
             version: this.smartAccountContract.version,
             ownerAddress,
+            options: {
+                passkeyOption,
+            },
         };
     }
 
@@ -109,11 +125,7 @@ export class SmartAccount {
     }
 
     async signUserOperation({ userOpHash, userOp }: UserOpBundle): Promise<UserOp> {
-        const eoas = await this.provider.request({ method: 'eth_accounts' });
-        const signature = await this.provider.request({
-            method: 'personal_sign',
-            params: [userOpHash, eoas[0]],
-        });
+        const signature = await this.personalSign(userOpHash);
         return { ...userOp, signature };
     }
 
@@ -122,11 +134,14 @@ export class SmartAccount {
         return this.sendSignedUserOperation(signedUserOp);
     }
 
-    async sendSignedUserOperation(userOp: UserOp, sessionDataParams?: SessionDataParams): Promise<string> {
+    async sendSignedUserOperation(
+        userOp: UserOp,
+        signerParams?: SessionKeySignerParams | PasskeySignerParams
+    ): Promise<string> {
         const accountConfig = await this.getAccountConfig();
         return this.sendRpc<string>({
             method: 'particle_aa_sendUserOp',
-            params: [accountConfig, userOp, sessionDataParams],
+            params: [accountConfig, userOp, signerParams],
         });
     }
 
@@ -156,12 +171,12 @@ export class SmartAccount {
     }
 
     async getAddress(): Promise<string> {
-        const eoas = await this.provider.request({ method: 'eth_accounts' });
-        if (!eoas || eoas.length === 0) {
+        const eoa = await this.getOwner();
+        if (!eoa) {
             return '';
         }
         const accountConfig = await this.getAccountConfig();
-        const localKey = `particle_${accountConfig.name}_${accountConfig.version}_${eoas[0]}`;
+        const localKey = `particle_${accountConfig.name}_${accountConfig.version}_${eoa}`;
         if (typeof window !== 'undefined' && localStorage) {
             const localAA = localStorage.getItem(localKey);
             if (localAA) {
@@ -175,11 +190,6 @@ export class SmartAccount {
             localStorage.setItem(localKey, address);
         }
         return address;
-    }
-
-    async getOwner(): Promise<string> {
-        const eoas = await this.provider.request({ method: 'eth_accounts' });
-        return eoas[0];
     }
 
     async isDeployed(): Promise<boolean> {
@@ -197,7 +207,16 @@ export class SmartAccount {
     }
 
     async sendRpc<T>(arg: RequestArguments): Promise<T> {
-        const chainId = await this.getChainId();
+        const chainId = Number(await this.getChainId());
+        const accountContract = this.config.aaOptions.accountContracts[this.smartAccountContract.name];
+        const contractConfig = accountContract.find(
+            (contract) => contract.version === this.smartAccountContract.version
+        );
+        if (contractConfig?.chainIds?.length) {
+            if (!contractConfig.chainIds.includes(chainId)) {
+                throw new Error(`Invalid Chain: ${chainId}`);
+            }
+        }
         const response = await this.connection
             .post(
                 '',
@@ -208,7 +227,7 @@ export class SmartAccount {
                 },
                 {
                     params: {
-                        chainId: Number(chainId),
+                        chainId,
                         projectUuid: this.config.projectId,
                         projectKey: this.config.clientKey,
                     },

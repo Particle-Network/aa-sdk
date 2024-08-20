@@ -28,14 +28,15 @@ const buildConfig = {
 const buildESM = build({
     ...buildConfig,
     format: 'esm',
-    outdir: 'es',
+    outdir: 'dist/esm',
+    outExtension: { '.js': '.mjs' },
     splitting: true,
 });
 
 const buildCJS = build({
     ...buildConfig,
-    format: 'cjs',
-    outdir: 'lib',
+    outdir: 'dist/cjs',
+    outExtension: { '.js': '.cjs' },
     splitting: false,
 });
 

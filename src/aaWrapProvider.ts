@@ -59,7 +59,11 @@ export class AAWrapProvider implements IEthereumProvider {
         if (SendTransactionEvent.Request === event) {
             this.events.once(event, listener);
         } else {
-            this.smartAccount.provider.once(event, listener);
+            if (this.smartAccount.provider.once) {
+                this.smartAccount.provider.once(event, listener);
+            } else {
+                this.smartAccount.provider.on(event, listener);
+            }
         }
         return this;
     }
@@ -68,7 +72,11 @@ export class AAWrapProvider implements IEthereumProvider {
         if (SendTransactionEvent.Request === event) {
             this.events.off(event, listener);
         } else {
-            this.smartAccount.provider.off(event, listener);
+            if (this.smartAccount.provider.off) {
+                this.smartAccount.provider.off(event, listener);
+            } else {
+                this.smartAccount.provider.removeListener?.(event, listener);
+            }
         }
         return this;
     }
@@ -77,7 +85,11 @@ export class AAWrapProvider implements IEthereumProvider {
         if (SendTransactionEvent.Request === event) {
             this.events.removeListener(event, listener);
         } else {
-            this.smartAccount.provider.removeListener(event, listener);
+            if (this.smartAccount.provider.removeListener) {
+                this.smartAccount.provider.removeListener(event, listener);
+            } else {
+                this.smartAccount.provider.off?.(event, listener);
+            }
         }
         return this;
     }

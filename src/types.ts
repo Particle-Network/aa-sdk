@@ -19,14 +19,18 @@ export interface JsonRpcRequest extends RequestArguments {
 export interface IEthereumProvider {
     on(event: string, listener: any): this;
 
-    once(event: string, listener: any): this;
+    once?(event: string, listener: any): this;
 
-    off(event: string, listener: any): this;
+    off?(event: string, listener: any): this;
 
-    removeListener(event: string, listener: any): this;
+    removeListener?(event: string, listener: any): this;
 
     request(request: Partial<JsonRpcRequest>): Promise<any>;
 }
+
+export type PasskeyProvider = {
+    getPasskeyOption: () => PasskeyOption;
+};
 
 export interface Account {
     isDeployed: boolean;
@@ -41,17 +45,28 @@ export interface Account {
     implementationVersion: string;
     fallBackHandlerAddress: string;
     version: string;
+    passkeyCredentialId?: string;
+    passkeyPublickey?: string;
 }
 
 export type AccountConfig = {
     name: string;
     version: string;
-    biconomyApiKey?: string;
     ownerAddress: string;
+    options?: AccountOptions;
+};
+
+export type AccountOptions = {
+    passkeyOption?: PasskeyOption;
+};
+
+export type PasskeyOption = {
+    credentialId: string;
+    publicKey?: string;
 };
 
 export interface AccountContractConfig {
-    chainIds: number[];
+    chainIds?: number[];
     version: string;
 }
 
@@ -153,7 +168,14 @@ export interface CreateSessionKeyOptions extends Omit<SessionKey, 'sessionKeyDat
     sessionKeyDataInAbi?: [[...string[]], [...unknown[]]];
 }
 
-export interface SessionDataParams {
+export interface SessionKeySignerParams {
     sessions: SessionKey[];
     targetSession: SessionKey;
 }
+
+export type PasskeySignerParams = {
+    passkeyVerifyData: {
+        authenticatorData: string;
+        clientDataJSON: string;
+    };
+};

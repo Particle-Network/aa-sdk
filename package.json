@@ -8,14 +8,13 @@
         "LICENSE"
     ],
     "type": "module",
-    "main": "lib/index.js",
-    "module": "es/index.js",
-    "types": "lib/types/index.d.ts",
+    "main": "./dist/cjs/index.cjs",
+    "module": "./dist/esm/index.mjs",
+    "types": "./dist/types/index.d.ts",
     "license": "Apache-2.0",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/Particle-Network/aa-sdk.git",
-        "directory": "packages/aa-sdk"
+        "url": "git+https://github.com/Particle-Network/aa-sdk.git"
     },
     "publishConfig": {
         "access": "public"
@@ -34,8 +33,8 @@
         "webpack-cli": "^5.1.4"
     },
     "scripts": {
-        "clean": "rm -rf lib && rm -rf es &&  rm -rf dist",
-        "package": "echo '{ \"type\": \"commonjs\" }' > lib/package.json",
+        "clean": "rm -rf dist",
+        "package": "mkdir -p dist/cjs && echo '{ \"type\": \"commonjs\" }' > dist/cjs/package.json",
         "build": "yarn clean && node ./esBuild.js && tsc --emitDeclarationOnly -p tsconfig.json && yarn package",
         "build:min.js": "webpack",
         "dev:lib": "cross-env NODE_ENV=development concurrently \"tsc -w\" \"node ./esBuild.js\"",

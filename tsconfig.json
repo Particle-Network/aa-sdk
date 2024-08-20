@@ -18,7 +18,7 @@
         "isolatedModules": true,
         "typeRoots": ["node_modules/@types"],
         "outDir": "lib",
-        "declarationDir": "lib/types",
+        "declarationDir": "dist/types",
         "noEmit": false
     }
 }
