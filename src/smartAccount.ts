@@ -88,13 +88,12 @@ export class SmartAccount {
     };
 
     private async getAccountConfig(): Promise<AccountConfig> {
-        const ownerAddress = await this.getOwner();
-
         const accountContract = this.config.aaOptions.accountContracts[this.smartAccountContract.name];
         if (!accountContract || accountContract.every((item) => item.version !== this.smartAccountContract.version)) {
             throw new Error('Please configure the smart account contract first');
         }
 
+        const ownerAddress = await this.getOwner();
         const passkeyOption = this.provider.getPasskeyOption?.();
         return {
             name: this.smartAccountContract.name,
@@ -171,12 +170,21 @@ export class SmartAccount {
     }
 
     async getAddress(): Promise<string> {
-        const eoa = await this.getOwner();
-        if (!eoa) {
+        let suffix = await this.getOwner();
+        if (!suffix) {
             return '';
         }
+
+        if (suffix === '0x0000000000000000000000000000000000000000') {
+            // passkey
+            const credentialId = this.provider.getPasskeyOption?.().credentialId;
+            if (credentialId) {
+                suffix = credentialId;
+            }
+        }
+
         const accountConfig = await this.getAccountConfig();
-        const localKey = `particle_${accountConfig.name}_${accountConfig.version}_${eoa}`;
+        const localKey = `particle_${accountConfig.name}_${accountConfig.version}_${suffix}`;
         if (typeof window !== 'undefined' && localStorage) {
             const localAA = localStorage.getItem(localKey);
             if (localAA) {

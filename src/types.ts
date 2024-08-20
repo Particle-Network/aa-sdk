@@ -29,7 +29,7 @@ export interface IEthereumProvider {
 }
 
 export type PasskeyProvider = {
-    getPasskeyOption: () => PasskeyOption;
+    getPasskeyOption?: () => PasskeyOption;
 };
 
 export interface Account {
