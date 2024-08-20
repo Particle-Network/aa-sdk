@@ -10,18 +10,10 @@ yarn add @particle-network/aa
 npm install @particle-network/aa
 ```
 
-## Before Start
-
-1. All testnets have Particle Verifying Paymaster enabled, you can send any gasless transaction;
-2. If you want to use [Particle Verifying Paymaster](paymaster.md) on Mainnet, you can deposit and use it directly without extra configration in SDK, [check docs](paymaster.md);
-3. If you want to use Biconomy Paymaster, please go to [https://dashboard.biconomy.io/](https://dashboard.biconomy.io/), create Paymaster & get dappApiKey;
-4. Token Paymaster is automatically enabled (we are using Biconomy Token Paymaster).
 
 ## Initialize the SmartAccount
 
-You need to create a Particle project to connect to your app, Visit [Particle Dashboard](../../getting-started/dashboard/) to learn more about Particle projects and apps.
-
-(Optional) And create a Biconomy Paymasters to connect AA, Visit [Biconomy Dashboard](https://dashboard.biconomy.io/) to learn more.
+You need to create a Particle project to connect to your app, Visit [Particle Dashboard](https://dashboard.particle.network).
 
 The provider is [EIP-1193: Ethereum Provider JavaScript API ](https://eips.ethereum.org/EIPS/eip-1193), you can use Particle Provider, MetaMask Provider or any EVM wallet provider.
 
@@ -38,30 +30,23 @@ const smartAccount = new SmartAccount(provider, {
             BICONOMY: [
                 {
                     version: '1.0.0',
-                    chainIds: [x, xx],
+                    chainIds: [x, xx], // optional
                 },
                 {
-                    version: '2.0.0',
-                    chainIds: [x, xx],
+                    version: '2.0.0'
                 }
             ],
             CYBERCONNECT: [
                 {
-                    version: '1.0.0',
-                    chainIds: [x, xx],
+                    version: '1.0.0'
                 }
             ],
             SIMPLE: [
                 {
-                    version: '1.0.0',
-                    chainIds: [x, xx],
+                    version: '1.0.0'
                 }
             ],
         },
-        paymasterApiKeys: [{
-            chainId: 1,
-            apiKey: 'paymaster api key',
-        }]
     },
 });
 
@@ -202,3 +187,7 @@ wrapProvider.once(SendTransactionEvent.Request, (feeQuotesResult) => {
 await web3.eth.sendTransaction(tx);
 
 ```
+
+## Learn More
+
+* [Docs](https://developers.particle.network/api-reference/aa/introduction)
