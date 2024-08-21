@@ -29,7 +29,9 @@ export interface IEthereumProvider {
 }
 
 export type PasskeyProvider = {
-    getPasskeyOption?: () => PasskeyOption;
+    isPasskey: true;
+    getPasskeyOption: () => Promise<PasskeyOption | undefined>;
+    signMessage: (message: string) => Promise<Required<SignUserOpHashResult>>;
 };
 
 export interface Account {
@@ -173,9 +175,21 @@ export interface SessionKeySignerParams {
     targetSession: SessionKey;
 }
 
+export type PasskeyVerifyData = {
+    authenticatorData: string;
+    clientDataJSON: string;
+};
+
 export type PasskeySignerParams = {
-    passkeyVerifyData: {
-        authenticatorData: string;
-        clientDataJSON: string;
-    };
+    passkeyVerifyData: PasskeyVerifyData;
+};
+
+export type SignUserOpResult = {
+    userOp: UserOp;
+    passkeySigner?: PasskeySignerParams;
+};
+
+export type SignUserOpHashResult = {
+    signature: string;
+    passkeyVerifyData?: PasskeyVerifyData;
 };

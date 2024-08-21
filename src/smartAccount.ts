@@ -12,6 +12,8 @@ import type {
     SendTransactionParams,
     SessionKey,
     SessionKeySignerParams,
+    SignUserOpHashResult,
+    SignUserOpResult,
     SmartAccountConfig,
     Transaction,
     UserOp,
@@ -25,7 +27,7 @@ export class SmartAccount {
 
     private smartAccountContract: AccountContract;
 
-    constructor(public provider: IEthereumProvider & PasskeyProvider, private config: SmartAccountConfig) {
+    constructor(public provider: IEthereumProvider & Partial<PasskeyProvider>, private config: SmartAccountConfig) {
         if (!this.config.projectId || !this.config.clientKey || !this.config.appId) {
             throw new Error('invalid project config');
         }
@@ -78,13 +80,18 @@ export class SmartAccount {
         return eoas[0];
     };
 
-    personalSign = async (msg: string): Promise<string> => {
-        const eoa = await this.getOwner();
-        const signature = await this.provider.request({
-            method: 'personal_sign',
-            params: [msg, eoa],
-        });
-        return signature;
+    signUserOpHash = async (msg: string): Promise<SignUserOpHashResult> => {
+        if (this.provider.isPasskey) {
+            const result = await this.provider.signMessage!(msg);
+            return result;
+        } else {
+            const eoa = await this.getOwner();
+            const signature = await this.provider.request({
+                method: 'personal_sign',
+                params: [msg, eoa],
+            });
+            return { signature };
+        }
     };
 
     private async getAccountConfig(): Promise<AccountConfig> {
@@ -94,7 +101,7 @@ export class SmartAccount {
         }
 
         const ownerAddress = await this.getOwner();
-        const passkeyOption = this.provider.getPasskeyOption?.();
+        const passkeyOption = await this.provider.getPasskeyOption?.();
         return {
             name: this.smartAccountContract.name,
             version: this.smartAccountContract.version,
@@ -123,14 +130,17 @@ export class SmartAccount {
         });
     }
 
-    async signUserOperation({ userOpHash, userOp }: UserOpBundle): Promise<UserOp> {
-        const signature = await this.personalSign(userOpHash);
-        return { ...userOp, signature };
+    async signUserOperation({ userOpHash, userOp }: UserOpBundle): Promise<SignUserOpResult> {
+        const { signature, passkeyVerifyData } = await this.signUserOpHash(userOpHash);
+        return {
+            userOp: { ...userOp, signature },
+            passkeySigner: passkeyVerifyData ? { passkeyVerifyData } : undefined,
+        };
     }
 
     async sendUserOperation({ userOpHash, userOp }: UserOpBundle): Promise<string> {
-        const signedUserOp = await this.signUserOperation({ userOpHash, userOp });
-        return this.sendSignedUserOperation(signedUserOp);
+        const { userOp: signedUserOp, passkeySigner } = await this.signUserOperation({ userOpHash, userOp });
+        return this.sendSignedUserOperation(signedUserOp, passkeySigner);
     }
 
     async sendSignedUserOperation(
@@ -177,7 +187,7 @@ export class SmartAccount {
 
         if (suffix === '0x0000000000000000000000000000000000000000') {
             // passkey
-            const credentialId = this.provider.getPasskeyOption?.().credentialId;
+            const credentialId = (await this.provider.getPasskeyOption?.())?.credentialId;
             if (credentialId) {
                 suffix = credentialId;
             }
