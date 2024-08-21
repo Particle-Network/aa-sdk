@@ -3,9 +3,7 @@
     "version": "2.0.0-alpha.0",
     "private": false,
     "files": [
-        "lib",
-        "es",
-        "LICENSE"
+        "dist"
     ],
     "type": "module",
     "main": "./dist/cjs/index.cjs",
