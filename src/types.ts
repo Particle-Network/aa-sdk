@@ -30,7 +30,7 @@ export interface IEthereumProvider {
 
 export type PasskeyProvider = {
     isPasskey: true;
-    getPasskeyOption: () => Promise<PasskeyOption | undefined>;
+    getPasskeyOption: () => Promise<PasskeyOption | null>;
     signMessage: (message: string) => Promise<Required<SignUserOpHashResult>>;
 };
 

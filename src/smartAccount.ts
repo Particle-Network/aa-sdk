@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Hex, hashMessage } from 'viem';
 import type {
     Account,
     AccountConfig,
@@ -80,15 +81,21 @@ export class SmartAccount {
         return eoas[0];
     };
 
-    signUserOpHash = async (msg: string): Promise<SignUserOpHashResult> => {
+    signUserOpHash = async (userOpHash: Hex): Promise<SignUserOpHashResult> => {
         if (this.provider.isPasskey) {
-            const result = await this.provider.signMessage!(msg);
+            let message = userOpHash;
+            if (this.smartAccountContract.name !== 'COINBASE') {
+                message = hashMessage({
+                    raw: userOpHash,
+                });
+            }
+            const result = await this.provider.signMessage!(message);
             return result;
         } else {
             const eoa = await this.getOwner();
             const signature = await this.provider.request({
                 method: 'personal_sign',
-                params: [msg, eoa],
+                params: [userOpHash, eoa],
             });
             return { signature };
         }
@@ -101,14 +108,20 @@ export class SmartAccount {
         }
 
         const ownerAddress = await this.getOwner();
-        const passkeyOption = await this.provider.getPasskeyOption?.();
+        let passkeyOption;
+        if (this.provider.isPasskey) {
+            passkeyOption = await this.provider.getPasskeyOption?.();
+        }
+
         return {
             name: this.smartAccountContract.name,
             version: this.smartAccountContract.version,
             ownerAddress,
-            options: {
-                passkeyOption,
-            },
+            options: passkeyOption
+                ? {
+                      passkeyOption,
+                  }
+                : undefined,
         };
     }
 
@@ -131,7 +144,7 @@ export class SmartAccount {
     }
 
     async signUserOperation({ userOpHash, userOp }: UserOpBundle): Promise<SignUserOpResult> {
-        const { signature, passkeyVerifyData } = await this.signUserOpHash(userOpHash);
+        const { signature, passkeyVerifyData } = await this.signUserOpHash(userOpHash as Hex);
         return {
             userOp: { ...userOp, signature },
             passkeySigner: passkeyVerifyData ? { passkeyVerifyData } : undefined,
@@ -185,7 +198,7 @@ export class SmartAccount {
             return '';
         }
 
-        if (suffix === '0x0000000000000000000000000000000000000000') {
+        if (this.provider.isPasskey && suffix === '0x0000000000000000000000000000000000000000') {
             // passkey
             const credentialId = (await this.provider.getPasskeyOption?.())?.credentialId;
             if (credentialId) {
