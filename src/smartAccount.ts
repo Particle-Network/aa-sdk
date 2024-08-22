@@ -23,6 +23,8 @@ import type {
 } from './types';
 import { payloadId, rpcUrl } from './utils';
 
+const loadAccountPromise = new Map<string, Promise<Account>>();
+
 export class SmartAccount {
     private connection;
 
@@ -215,7 +217,14 @@ export class SmartAccount {
             }
         }
 
-        const account = await this.getAccount();
+        const configKey = JSON.stringify(accountConfig);
+        let accountPromise = loadAccountPromise.get(configKey);
+        if (!accountPromise) {
+            accountPromise = this.getAccount();
+            loadAccountPromise.set(configKey, accountPromise);
+        }
+
+        const account = await accountPromise;
         const address = account.smartAccountAddress;
         if (typeof window !== 'undefined' && localStorage) {
             localStorage.setItem(localKey, address);
