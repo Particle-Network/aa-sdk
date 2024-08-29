@@ -224,12 +224,17 @@ export class SmartAccount {
             loadAccountPromise.set(configKey, accountPromise);
         }
 
-        const account = await accountPromise;
-        const address = account.smartAccountAddress;
-        if (typeof window !== 'undefined' && localStorage) {
-            localStorage.setItem(localKey, address);
+        try {
+            const account = await accountPromise;
+            const address = account.smartAccountAddress;
+            if (typeof window !== 'undefined' && localStorage) {
+                localStorage.setItem(localKey, address);
+            }
+            return address;
+        } catch (error) {
+            loadAccountPromise.delete(configKey);
+            throw error;
         }
-        return address;
     }
 
     async isDeployed(): Promise<boolean> {
