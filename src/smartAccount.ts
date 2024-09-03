@@ -8,13 +8,10 @@ import type {
     FeeQuotesResponse,
     IEthereumProvider,
     PasskeyProvider,
-    PasskeySignerParams,
     RequestArguments,
     SendTransactionParams,
     SessionKey,
     SessionKeySignerParams,
-    SignUserOpHashResult,
-    SignUserOpResult,
     SmartAccountConfig,
     Transaction,
     UserOp,
@@ -83,24 +80,19 @@ export class SmartAccount {
         return eoas[0];
     };
 
-    signUserOpHash = async (userOpHash: Hex): Promise<SignUserOpHashResult> => {
-        if (this.provider.isPasskey) {
-            let message = userOpHash;
-            if (this.smartAccountContract.name !== 'COINBASE') {
-                message = hashMessage({
-                    raw: userOpHash,
-                });
-            }
-            const result = await this.provider.signMessage!(message);
-            return result;
-        } else {
-            const eoa = await this.getOwner();
-            const signature = await this.provider.request({
-                method: 'personal_sign',
-                params: [userOpHash, eoa],
+    signUserOpHash = async (userOpHash: Hex): Promise<string> => {
+        let message = userOpHash;
+        if (this.provider.isPasskey && this.smartAccountContract.name !== 'COINBASE') {
+            message = hashMessage({
+                raw: userOpHash,
             });
-            return { signature };
         }
+        const eoa = await this.getOwner();
+        const signature = await this.provider.request({
+            method: 'personal_sign',
+            params: [message, eoa],
+        });
+        return signature;
     };
 
     private async getAccountConfig(): Promise<AccountConfig> {
@@ -145,23 +137,17 @@ export class SmartAccount {
         });
     }
 
-    async signUserOperation({ userOpHash, userOp }: UserOpBundle): Promise<SignUserOpResult> {
-        const { signature, passkeyVerifyData } = await this.signUserOpHash(userOpHash as Hex);
-        return {
-            userOp: { ...userOp, signature },
-            passkeySigner: passkeyVerifyData ? { passkeyVerifyData } : undefined,
-        };
+    async signUserOperation({ userOpHash, userOp }: UserOpBundle): Promise<UserOp> {
+        const signature = await this.signUserOpHash(userOpHash as Hex);
+        return { ...userOp, signature };
     }
 
     async sendUserOperation({ userOpHash, userOp }: UserOpBundle): Promise<string> {
-        const { userOp: signedUserOp, passkeySigner } = await this.signUserOperation({ userOpHash, userOp });
-        return this.sendSignedUserOperation(signedUserOp, passkeySigner);
+        const signedUserOp = await this.signUserOperation({ userOpHash, userOp });
+        return this.sendSignedUserOperation(signedUserOp);
     }
 
-    async sendSignedUserOperation(
-        userOp: UserOp,
-        signerParams?: SessionKeySignerParams | PasskeySignerParams
-    ): Promise<string> {
+    async sendSignedUserOperation(userOp: UserOp, signerParams?: SessionKeySignerParams): Promise<string> {
         const accountConfig = await this.getAccountConfig();
         return this.sendRpc<string>({
             method: 'particle_aa_sendUserOp',

@@ -31,7 +31,6 @@ export interface IEthereumProvider {
 export type PasskeyProvider = {
     isPasskey: true;
     getPasskeyOption: () => Promise<PasskeyOption | null>;
-    signMessage: (message: string) => Promise<Required<SignUserOpHashResult>>;
 };
 
 export interface Account {
@@ -178,15 +177,6 @@ export interface SessionKeySignerParams {
 export type PasskeyVerifyData = {
     authenticatorData: string;
     clientDataJSON: string;
-};
-
-export type PasskeySignerParams = {
-    passkeyVerifyData: PasskeyVerifyData;
-};
-
-export type SignUserOpResult = {
-    userOp: UserOp;
-    passkeySigner?: PasskeySignerParams;
 };
 
 export type SignUserOpHashResult = {
