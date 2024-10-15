@@ -102,8 +102,6 @@ const paidNativeUserOpHash = feeQuotesResult.verifyingPaymasterNative?.userOpHas
 // pay with ERC-20 tokens: fee quotes
 const tokenPaymasterAddress = feeQuotesResult.tokenPaymaster.tokenPaymasterAddress;
 const tokenFeeQuotes = feeQuotesResult.tokenPaymaster.feeQuotes;
-
-</code></pre>
 ```
 
 ## Build User Operation
